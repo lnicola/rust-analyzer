@@ -459,7 +459,7 @@ WhileExpr =
   loop_body:BlockExpr
 
 Label =
-  'lifetime'
+  'lifetime' ':'
 
 BreakExpr =
   Attr* 'break' 'lifetime'? Expr?
