@@ -46,7 +46,10 @@ pub mod loader;
 mod path_interner;
 mod vfs_path;
 
-use std::{fmt, mem};
+use std::{
+    fmt, mem,
+    sync::atomic::{AtomicU64, Ordering},
+};
 
 use crate::path_interner::PathInterner;
 
@@ -73,6 +76,7 @@ pub struct Vfs {
     interner: PathInterner,
     data: Vec<Option<Vec<u8>>>,
     changes: Vec<ChangedFile>,
+    op_counter: AtomicU64,
 }
 
 /// Changed file in the [`Vfs`].
@@ -130,7 +134,12 @@ impl Vfs {
     /// Panics if the id is not present in the `Vfs`, or if the corresponding file is
     /// deleted.
     pub fn file_contents(&self, file_id: FileId) -> &[u8] {
-        self.get(file_id).as_deref().unwrap()
+        let op = self.op_counter.fetch_add(1, Ordering::SeqCst);
+        let entry = self.get(file_id);
+        let path = self.interner.lookup(file_id);
+        tracing::debug!(%op, %path, "read");
+
+        entry.as_deref().unwrap()
     }
 
     /// Returns the overall memory usage for the stored files.
@@ -158,14 +167,22 @@ impl Vfs {
     /// If the path does not currently exists in the `Vfs`, allocates a new
     /// [`FileId`] for it.
     pub fn set_file_contents(&mut self, path: VfsPath, mut contents: Option<Vec<u8>>) -> bool {
-        let file_id = self.alloc_file_id(path);
+        let op = self.op_counter.fetch_add(1, Ordering::SeqCst);
+        let file_id = self.alloc_file_id(path.clone());
         let change_kind = match (self.get(file_id), &contents) {
-            (None, None) => return false,
-            (Some(old), Some(new)) if old == new => return false,
+            (None, None) => {
+                tracing::debug!(%op, %path, noop = 1, "write");
+                return false;
+            }
+            (Some(old), Some(new)) if old == new => {
+                tracing::debug!(%op, %path, noop = 1, "write");
+                return false;
+            }
             (None, Some(_)) => ChangeKind::Create,
             (Some(_), None) => ChangeKind::Delete,
             (Some(_), Some(_)) => ChangeKind::Modify,
         };
+        tracing::debug!(%op, %path, noop = 0, "write");
         if let Some(contents) = &mut contents {
             contents.shrink_to_fit();
         }
