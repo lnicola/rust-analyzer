@@ -52,7 +52,7 @@ pub(crate) fn complete_use_path(
                         )
                     };
                     for (name, def) in module_scope {
-                        if !ctx.check_stability(def.attrs(ctx.db).as_deref()) {
+                        if !ctx.check_stability(Some(*module), def.attrs(ctx.db).as_deref()) {
                             continue;
                         }
                         let is_name_already_imported = name

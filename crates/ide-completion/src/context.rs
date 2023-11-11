@@ -513,11 +513,34 @@ impl CompletionContext<'_> {
     }
 
     /// Checks whether this item should be listed in regards to stability. Returns `true` if we should.
-    pub(crate) fn check_stability(&self, attrs: Option<&hir::Attrs>) -> bool {
-        let Some(attrs) = attrs else {
+    pub(crate) fn check_stability(
+        &self,
+        module: Option<hir::Module>,
+        attrs: Option<&hir::Attrs>,
+    ) -> bool {
+        if self.is_nightly {
             return true;
-        };
-        !attrs.is_unstable() || self.is_nightly
+        }
+
+        if let Some(attrs) = attrs {
+            if attrs.is_unstable() {
+                return false;
+            }
+        }
+        if let Some(mut module) = module {
+            loop {
+                if module.attrs(self.db).is_unstable() {
+                    return false;
+                }
+
+                if let Some(parent) = module.parent(self.db) {
+                    module = parent;
+                } else {
+                    break;
+                }
+            }
+        }
+        true
     }
 
     /// Whether the given trait is an operator trait or not.

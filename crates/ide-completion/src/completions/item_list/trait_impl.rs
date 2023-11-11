@@ -152,7 +152,9 @@ fn complete_trait_impl(
     if let Some(hir_impl) = ctx.sema.to_def(impl_def) {
         get_missing_assoc_items(&ctx.sema, impl_def)
             .into_iter()
-            .filter(|item| ctx.check_stability(Some(&item.attrs(ctx.db))))
+            .filter(|item| {
+                ctx.check_stability(Some(item.module(ctx.db)), Some(&item.attrs(ctx.db)))
+            })
             .for_each(|item| {
                 use self::ImplCompletionKind::*;
                 match (item, kind) {

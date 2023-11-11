@@ -262,9 +262,15 @@ fn import_on_the_fly(
         .filter(ns_filter)
         .filter(|import| {
             let original_item = &import.original_item;
+            let import_module =
+                import.item_to_import.as_module_def().and_then(|module| module.module(ctx.db));
+            let original_item_module =
+                original_item.as_module_def().and_then(|module| module.module(ctx.db));
             !ctx.is_item_hidden(&import.item_to_import)
                 && !ctx.is_item_hidden(original_item)
-                && ctx.check_stability(original_item.attrs(ctx.db).as_deref())
+                && ctx
+                    .check_stability(import_module, import.item_to_import.attrs(ctx.db).as_deref())
+                && ctx.check_stability(original_item_module, original_item.attrs(ctx.db).as_deref())
         })
         .sorted_by_key(|located_import| {
             compute_fuzzy_completion_order_key(&located_import.import_path, &user_input_lowercased)
@@ -304,9 +310,15 @@ fn import_on_the_fly_pat_(
         .filter(ns_filter)
         .filter(|import| {
             let original_item = &import.original_item;
+            let import_module =
+                import.item_to_import.as_module_def().and_then(|module| module.module(ctx.db));
+            let original_item_module =
+                original_item.as_module_def().and_then(|module| module.module(ctx.db));
             !ctx.is_item_hidden(&import.item_to_import)
                 && !ctx.is_item_hidden(original_item)
-                && ctx.check_stability(original_item.attrs(ctx.db).as_deref())
+                && ctx
+                    .check_stability(import_module, import.item_to_import.attrs(ctx.db).as_deref())
+                && ctx.check_stability(original_item_module, original_item.attrs(ctx.db).as_deref())
         })
         .sorted_by_key(|located_import| {
             compute_fuzzy_completion_order_key(&located_import.import_path, &user_input_lowercased)
