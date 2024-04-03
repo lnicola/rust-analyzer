@@ -83,12 +83,8 @@ jobs:
           node-version: 18
 
       - name: Update apt repositories
-        if: matrix.target == 'x86_64-unknown-linux-gnu' || matrix.target == 'aarch64-unknown-linux-gnu' || matrix.target == 'arm-unknown-linux-gnueabihf'
+        if: matrix.target == 'aarch64-unknown-linux-gnu' || matrix.target == 'arm-unknown-linux-gnueabihf'
         run: sudo apt-get update
-
-      - name: Install C toolchain
-        if: matrix.target == 'x86_64-unknown-linux-gnu'
-        run: sudo apt-get install gcc
 
       - name: Install AArch64 target toolchain
         if: matrix.target == 'aarch64-unknown-linux-gnu'
@@ -99,7 +95,7 @@ jobs:
         run: sudo apt-get install gcc-arm-linux-gnueabihf
 
       - name: Dist
-        run: cargo xtask dist --client-patch-version ${{ github.run_number }}
+        run: cargo xtask dist --jemalloc --client-patch-version ${{ github.run_number }}
 
       - run: npm ci
         working-directory: editors/code
@@ -163,7 +159,7 @@ jobs:
           fetch-depth: ${{ env.FETCH_DEPTH }}
 
       - name: Dist
-        run: cargo xtask dist --client-patch-version ${{ github.run_number }}
+        run: cargo xtask dist --jemalloc --client-patch-version ${{ github.run_number }}
 
       - run: npm ci
         working-directory: editors/code
