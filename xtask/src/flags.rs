@@ -32,9 +32,12 @@ xflags::xflags! {
         cmd release {
             optional --dry-run
         }
-        cmd promote {
-            optional --dry-run
+
+        cmd rustc-pull {
+            optional --commit refspec: String
         }
+        cmd rustc-push {}
+
         cmd dist {
             /// Use mimalloc allocator for server
             optional --mimalloc
@@ -77,7 +80,8 @@ pub enum XtaskCmd {
     Install(Install),
     FuzzTests(FuzzTests),
     Release(Release),
-    Promote(Promote),
+    RustcPull(RustcPull),
+    RustcPush(RustcPush),
     Dist(Dist),
     PublishReleaseNotes(PublishReleaseNotes),
     Metrics(Metrics),
@@ -104,9 +108,12 @@ pub struct Release {
 }
 
 #[derive(Debug)]
-pub struct Promote {
-    pub dry_run: bool,
+pub struct RustcPull {
+    pub commit: Option<String>,
 }
+
+#[derive(Debug)]
+pub struct RustcPush;
 
 #[derive(Debug)]
 pub struct Dist {
