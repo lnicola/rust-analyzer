@@ -92,10 +92,6 @@ fn dist_server(
     //   * on Linux, this blows up the binary size from 8MB to 43MB, which is unreasonable.
     // let _e = sh.push_env("CARGO_PROFILE_RELEASE_DEBUG", "1");
 
-    if target.name.contains("-linux-") {
-        env::set_var("CC", "clang");
-    }
-
     let target_name = &target.name;
     let features = allocator.to_features();
     cmd!(sh, "cargo build --manifest-path ./crates/rust-analyzer/Cargo.toml --bin rust-analyzer --target {target_name} {features...} --release").run()?;
